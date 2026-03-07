@@ -17,12 +17,12 @@ class Route(models.Model):
     id = models.AutoField(primary_key=True)
     source = models.ForeignKey(
         Station,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='routes_from',
     )
     destination = models.ForeignKey(
         Station,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='routes_to',
     )
     distance = models.PositiveIntegerField()
@@ -58,7 +58,7 @@ class Train(models.Model):
     places_in_cargo = models.PositiveIntegerField()
     train_type = models.ForeignKey(
         TrainType,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='trains',
     )
 
@@ -80,12 +80,12 @@ class Journey(models.Model):
     id = models.AutoField(primary_key=True)
     route = models.ForeignKey(
         Route,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='journeys',
     )
     train = models.ForeignKey(
         Train,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='journeys',
     )
     departure_date = models.DateField()
@@ -97,7 +97,7 @@ class Journey(models.Model):
     )
 
     def clean(self):
-        if self.departure_date < self.arrival_date:
+        if self.departure_date > self.arrival_date:
             raise ValidationError("Departure date must be before arrival date.")
 
     def __str__(self):
@@ -141,15 +141,22 @@ class Ticket(models.Model):
         ]
 
     def clean(self):
+        if not self.journey.id:
+            return
+
         train = self.journey.train
         if self.cargo < 1:
             raise ValidationError("Cargo number must be greater than 0")
         if self.seat < 1:
             raise ValidationError("Seat number must be greater than 0")
-        if self.cargo <= train.cargo_num:
+        if self.cargo > train.cargo_num:
             raise ValidationError(f"Train has only {train.cargo_num} wagons")
-        if self.seat <= train.places_in_cargo:
+        if self.seat > train.places_in_cargo:
             raise ValidationError(f"Each wagon only {train.places_in_cargo} seats")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.journey} | wagon {self.cargo} seat {self.seat}"
