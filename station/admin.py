@@ -5,7 +5,9 @@ from .models import (
     Journey,
     Crew,
     Train,
-    TrainType
+    TrainType,
+    Order,
+    Ticket
 )
 
 
@@ -93,4 +95,38 @@ class TrainTypeAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "name",
+    )
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = (
+        "created_at",
+        "user"
+    )
+    list_filter = (
+        "created_at",
+        "user"
+    )
+    search_fields = (
+        "created_at",
+        "user"
+    )
+
+@admin.register(Ticket)
+class TicketAdmin(admin.ModelAdmin):
+    list_display = (
+        "cargo",
+        "seat",
+        "journey",
+        "order",
+    )
+    list_filter = (
+        "cargo",
+        "seat",
+        "journey",
+        "order",
+    )
+    search_fields = (
+        "journey",
+        "order__user__username",
     )

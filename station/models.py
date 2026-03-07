@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 
@@ -101,3 +102,54 @@ class Journey(models.Model):
 
     def __str__(self):
         return f"{self.route} {self.departure_date}"
+
+
+class Order(models.Model):
+    id = models.AutoField(primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="orders"
+    )
+
+    def __str__(self):
+        return f"Order {self.id} ({self.user})"
+
+
+class Ticket(models.Model):
+    id = models.AutoField(primary_key=True)
+    cargo = models.PositiveIntegerField()
+    seat = models.PositiveIntegerField()
+    journey = models.ForeignKey(
+        Journey,
+        on_delete=models.CASCADE,
+        related_name='tickets',
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='tickets',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["journey", "cargo", "seat"],
+                name="unique_ticket_for_journey"
+            )
+        ]
+
+    def clean(self):
+        train = self.journey.train
+        if self.cargo < 1:
+            raise ValidationError("Cargo number must be greater than 0")
+        if self.seat < 1:
+            raise ValidationError("Seat number must be greater than 0")
+        if self.cargo <= train.cargo_num:
+            raise ValidationError(f"Train has only {train.cargo_num} wagons")
+        if self.seat <= train.places_in_cargo:
+            raise ValidationError(f"Each wagon only {train.places_in_cargo} seats")
+
+    def __str__(self):
+        return f"{self.journey} | wagon {self.cargo} seat {self.seat}"
