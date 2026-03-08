@@ -11,7 +11,12 @@ from station.serializers import (
     RouteSerializer,
     TrainTypeSerializer,
     TrainSerializer,
-    CrewSerializer, JourneySerializer, OrderSerializer, TicketSerializer,
+    CrewSerializer,
+    JourneyListSerializer,
+    JourneySerializer,
+    JourneyDetailSerializer,
+    OrderSerializer,
+    TicketSerializer, JourneyCreateSerializer,
 )
 
 class StationViewSet(viewsets.ModelViewSet):
@@ -38,8 +43,20 @@ class CrewViewSet(viewsets.ModelViewSet):
     serializer_class = CrewSerializer
 
 class JourneyViewSet(viewsets.ModelViewSet):
-    queryset = Journey.objects.all()
-    serializer_class = JourneySerializer
+    queryset = (Journey.objects
+    .select_related(
+        'route',
+        'train',
+    ).prefetch_related(
+        'crew'
+    ))
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return JourneyListSerializer
+        elif self.action == 'retrieve':
+            return JourneyDetailSerializer
+        return JourneyCreateSerializer
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
