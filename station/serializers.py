@@ -22,6 +22,45 @@ class RouteSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class RouteListSerializer(RouteSerializer):
+    source = serializers.StringRelatedField()
+    destination = serializers.StringRelatedField()
+
+    class Meta(RouteSerializer.Meta):
+        fields = (
+            'id',
+            'source',
+            'destination',
+            'distance',
+        )
+
+
+class RouteDetailSerializer(RouteSerializer):
+    source = StationSerializer(read_only=True)
+    destination = StationSerializer(read_only=True)
+
+
+class RouteCreateSerializer(RouteSerializer):
+    source_id = serializers.PrimaryKeyRelatedField(
+        queryset=Station.objects.all(),
+        source='source',
+    )
+    destination_id = serializers.PrimaryKeyRelatedField(
+        queryset=Station.objects.all(),
+        source='destination',
+    )
+
+    class Meta(RouteSerializer.Meta):
+        fields = (
+            'source_id',
+            'destination_id',
+            'distance',
+        )
+
+    def to_representation(self, instance):
+        return RouteListSerializer(instance, context=self.context).data
+
+
 class TrainTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrainType
@@ -32,6 +71,48 @@ class TrainSerializer(serializers.ModelSerializer):
     class Meta:
         model = Train
         fields = '__all__'
+
+
+class TrainListSerializer(TrainSerializer):
+    train_type = serializers.StringRelatedField()
+
+    class Meta(TrainSerializer.Meta):
+        fields = (
+            'id',
+            'name',
+            "cargo_num",
+            "places_in_cargo",
+            "train_type",
+        )
+
+
+class TrainDetailSerializer(TrainSerializer):
+    train_type = TrainTypeSerializer(read_only=True)
+
+    class Meta(TrainSerializer.Meta):
+        fields = (
+            'id',
+            'name',
+            "train_type",
+            "cargo_num",
+            "places_in_cargo",
+        )
+
+
+class TrainCreateSerializer(serializers.ModelSerializer):
+    train_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=TrainType.objects.all(),
+        source='train_type',
+    )
+
+    class Meta(TrainSerializer.Meta):
+        fields = (
+            'id',
+            'name',
+            "cargo_num",
+            "places_in_cargo",
+            "train_type_id",
+        )
 
 
 class CrewSerializer(serializers.ModelSerializer):

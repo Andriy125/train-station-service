@@ -4,20 +4,28 @@ from station.models import (
     Route,
     TrainType,
     Train,
-    Crew, Journey, Order, Ticket
+    Crew,
+    Journey,
+    Order,
+    Ticket
 )
 from station.serializers import (
     StationSerializer,
-    RouteSerializer,
+    RouteListSerializer,
+    RouteDetailSerializer,
+    RouteCreateSerializer,
     TrainTypeSerializer,
-    TrainSerializer,
+    TrainListSerializer,
+    TrainDetailSerializer,
+    TrainCreateSerializer,
     CrewSerializer,
     JourneyListSerializer,
-    JourneySerializer,
     JourneyDetailSerializer,
+    JourneyCreateSerializer,
     OrderSerializer,
-    TicketSerializer, JourneyCreateSerializer,
+    TicketSerializer,
 )
+
 
 class StationViewSet(viewsets.ModelViewSet):
     queryset = Station.objects.all()
@@ -25,8 +33,15 @@ class StationViewSet(viewsets.ModelViewSet):
 
 
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.all()
-    serializer_class = RouteSerializer
+    queryset = Route.objects.select_related('source', 'destination')
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return RouteListSerializer
+        elif self.action == 'retrieve':
+            return RouteDetailSerializer
+        return RouteCreateSerializer
+
 
 
 class TrainTypeViewSet(viewsets.ModelViewSet):
@@ -35,12 +50,20 @@ class TrainTypeViewSet(viewsets.ModelViewSet):
 
 
 class TrainViewSet(viewsets.ModelViewSet):
-    queryset = Train.objects.all()
-    serializer_class = TrainSerializer
+    queryset = Train.objects.select_related('train_type')
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return TrainListSerializer
+        elif self.action == 'retrieve':
+            return TrainDetailSerializer
+        return TrainCreateSerializer
+
 
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
+
 
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = (Journey.objects
@@ -58,9 +81,11 @@ class JourneyViewSet(viewsets.ModelViewSet):
             return JourneyDetailSerializer
         return JourneyCreateSerializer
 
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
