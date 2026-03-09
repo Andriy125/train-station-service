@@ -16,6 +16,22 @@ class StationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class StationListSerializer(StationSerializer):
+    class Meta(StationSerializer.Meta):
+        fields = (
+            'id',
+            'name',
+        )
+
+
+class StationDetailSerializer(StationSerializer):
+    pass
+
+
+class StationCreateSerializer(StationSerializer):
+    pass
+
+
 class RouteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Route
@@ -121,6 +137,35 @@ class CrewSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CrewListSerializer(CrewSerializer):
+    class Meta(CrewSerializer.Meta):
+        fields = (
+            'id',
+            'full_name',
+            'role',
+        )
+
+
+class CrewDetailSerializer(CrewSerializer):
+    class Meta(CrewSerializer.Meta):
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'role',
+        )
+
+
+class CrewCreateSerializer(CrewSerializer):
+    class Meta(CrewSerializer.Meta):
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'role',
+        )
+
+
 class JourneySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -131,6 +176,7 @@ class JourneySerializer(serializers.ModelSerializer):
 class JourneyListSerializer(JourneySerializer):
     route = serializers.StringRelatedField()
     train = serializers.StringRelatedField()
+    crew = serializers.StringRelatedField(many=True)
 
     class Meta(JourneySerializer.Meta):
         fields = (
@@ -141,6 +187,7 @@ class JourneyListSerializer(JourneySerializer):
             "departure_date",
             "arrival_date"
         )
+
 
 class JourneyDetailSerializer(JourneySerializer):
     route = RouteSerializer(read_only=True)
@@ -180,10 +227,42 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class TicketSerializer(serializers.ModelSerializer):
-    journey = JourneySerializer(read_only=True)
-    order = OrderSerializer(read_only=True)
+class OrderListSerializer(OrderSerializer):
+    class Meta(OrderSerializer.Meta):
+        fields = (
+            "id",
+            "created_at",
+        )
 
+
+class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = '__all__'
+
+
+class TicketListSerializer(TicketSerializer):
+    journey = serializers.StringRelatedField()
+
+    class Meta(TicketSerializer.Meta):
+        fields = (
+            "id",
+            "journey",
+            "cargo",
+            "seat",
+        )
+
+
+class TicketDetailSerializer(TicketSerializer):
+    journey = JourneyListSerializer(read_only=True)
+    order = OrderListSerializer(read_only=True)
+
+
+class OrderDetailSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
+    class Meta(OrderSerializer.Meta):
+        fields = (
+            "id",
+            "created_at",
+            "tickets",
+        )
