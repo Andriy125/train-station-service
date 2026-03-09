@@ -64,7 +64,6 @@ class RouteViewSet(viewsets.ModelViewSet):
         return RouteCreateSerializer
 
 
-
 class TrainTypeViewSet(viewsets.ModelViewSet):
     queryset = TrainType.objects.all()
     serializer_class = TrainTypeSerializer

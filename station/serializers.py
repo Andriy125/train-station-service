@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from rest_framework import serializers, viewsets
 from station.models import (
     Station,
@@ -258,6 +260,25 @@ class TicketDetailSerializer(TicketSerializer):
     order = OrderListSerializer(read_only=True)
 
 
+class TicketCreateSerializer(TicketSerializer):
+    class Meta(TicketSerializer.Meta):
+        fields = (
+            "id",
+            "journey",
+            "cargo",
+            "seat",
+        )
+
+    def validate(self, attrs):
+        instance = Ticket(**attrs)
+        try:
+            instance.full_clean()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
+        return attrs
+
+
 class OrderDetailSerializer(OrderSerializer):
     tickets = TicketListSerializer(many=True, read_only=True)
     class Meta(OrderSerializer.Meta):
@@ -266,3 +287,57 @@ class OrderDetailSerializer(OrderSerializer):
             "created_at",
             "tickets",
         )
+
+class OrderCreateSerializer(OrderSerializer):
+    tickets = TicketCreateSerializer(many=True, allow_empty=False)
+
+    class Meta(OrderSerializer.Meta):
+        fields = (
+            "id",
+            "created_at",
+            "tickets",
+        )
+
+    def validate(self, attrs):
+        tickets = attrs.get("tickets")
+        if tickets:
+            self._validate_tickets_uniqueness(tickets)
+            self._validate_seats_availability(tickets)
+        return attrs
+
+    @staticmethod
+    def _validate_tickets_uniqueness(tickets):
+        ticket_list = []
+        for ticket in tickets:
+            ticket_identity = (ticket["journey"], ticket["cargo"], ticket["seat"])
+            if ticket_identity in ticket_list:
+                raise serializers.ValidationError(
+                    "You cannot order the same ticket multiple times in one order."
+                )
+            ticket_list.append(ticket_identity)
+
+    @staticmethod
+    def _validate_seats_availability(tickets):
+        for ticket in tickets:
+            if Ticket.objects.filter(
+                    journey=ticket["journey"],
+                    cargo=ticket["cargo"],
+                    seat=ticket["seat"]
+            ).exists():
+                raise serializers.ValidationError({
+                    f"Seat {ticket['seat']} in carriage {ticket['cargo']} "
+                    f"for journey {ticket['journey']} is already taken"
+                })
+
+    def create(self, validated_data):
+        tickets_data = validated_data.pop('tickets')
+        with transaction.atomic():
+            order = Order.objects.create(
+                user=self.context["request"].user,
+            )
+            for ticket in tickets_data:
+                Ticket.objects.create(order=order, **ticket)
+            return order
+
+    def to_representation(self, instance):
+        return OrderDetailSerializer(instance, context=self.context).data
