@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import serializers, viewsets
@@ -320,9 +321,9 @@ class OrderCreateSerializer(OrderSerializer):
     def _validate_seats_availability(tickets):
         for ticket in tickets:
             if Ticket.objects.filter(
-                    journey=ticket["journey"],
-                    cargo=ticket["cargo"],
-                    seat=ticket["seat"]
+                journey=ticket["journey"],
+                cargo=ticket["cargo"],
+                seat=ticket["seat"]
             ).exists():
                 raise serializers.ValidationError({
                     f"Seat {ticket['seat']} in carriage {ticket['cargo']} "

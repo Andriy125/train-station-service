@@ -1,4 +1,6 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+
 from station.models import (
     Station,
     Route,
@@ -44,6 +46,7 @@ from station.serializers import (
 
 class StationViewSet(viewsets.ModelViewSet):
     queryset = Station.objects.all()
+    permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -55,6 +58,7 @@ class StationViewSet(viewsets.ModelViewSet):
 
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.select_related('source', 'destination')
+    permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -67,6 +71,7 @@ class RouteViewSet(viewsets.ModelViewSet):
 class TrainTypeViewSet(viewsets.ModelViewSet):
     queryset = TrainType.objects.all()
     serializer_class = TrainTypeSerializer
+    permission_classes = [IsAdminUser]
 
 
 class TrainViewSet(viewsets.ModelViewSet):
@@ -82,6 +87,7 @@ class TrainViewSet(viewsets.ModelViewSet):
 
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
+    permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -100,6 +106,11 @@ class JourneyViewSet(viewsets.ModelViewSet):
         'crew'
     ))
 
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [AllowAny()]
+        return [IsAdminUser()]
+
     def get_serializer_class(self):
         if self.action == 'list':
             return JourneyListSerializer
@@ -110,6 +121,8 @@ class JourneyViewSet(viewsets.ModelViewSet):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().prefetch_related('tickets')
+    permission_classes = [IsAuthenticated]
+
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -126,6 +139,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.select_related('journey', 'order')
+    permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
         if self.action == 'list':
