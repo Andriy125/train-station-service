@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import serializers, viewsets
+from rest_framework.exceptions import PermissionDenied
+
 from station.models import (
     Station,
     Route,
@@ -228,6 +230,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = '__all__'
+        read_only_fields = ('user',)
 
 
 class OrderListSerializer(OrderSerializer):
@@ -242,6 +245,20 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get("request")
+
+        if request and request.user and not request.user.is_staff:
+            if "order" in self.fields:
+                self.fields["order"].queryset = Order.objects.filter(user=request.user)
+
+    def validate_order(self, value):
+        user = self.context["request"].user
+        if value.user != user and not user.is_staff:
+            raise serializers.ValidationError("You cannot add tickets to someone else's order.")
+        return value
 
 
 class TicketListSerializer(TicketSerializer):

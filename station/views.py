@@ -120,9 +120,18 @@ class JourneyViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().prefetch_related('tickets')
+    queryset = Order.objects.none()
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_staff:
+            return Order.objects.all().prefetch_related('tickets')
+
+        return Order.objects.filter(
+            user=user
+        ).prefetch_related('tickets')
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -131,15 +140,16 @@ class OrderViewSet(viewsets.ModelViewSet):
             return OrderDetailSerializer
         return OrderSerializer
 
-    def get_queryset(self):
-        return Order.objects.filter(
-            user=self.request.user,
-        ).prefetch_related('tickets')
-
 
 class TicketViewSet(viewsets.ModelViewSet):
-    queryset = Ticket.objects.select_related('journey', 'order')
-    permission_classes = [IsAdminUser]
+    queryset = Ticket.objects.none()
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Ticket.objects.filter(order__user=self.request.user)
+        if self.action in ['list', 'retrieve']:
+            queryset = queryset.select_related('journey', 'order')
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
