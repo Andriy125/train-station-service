@@ -1,6 +1,10 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAdminUser,
+    AllowAny
+)
+from station.filters import JourneyFilter
 from station.models import (
     Station,
     Route,
@@ -105,6 +109,8 @@ class JourneyViewSet(viewsets.ModelViewSet):
     ).prefetch_related(
         'crew'
     ))
+
+    filterset_class = JourneyFilter
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
