@@ -15,6 +15,7 @@ from station.models import (
     Order,
     Ticket
 )
+from django.db.models import Count, F, ExpressionWrapper, IntegerField
 from station.serializers import (
     StationListSerializer,
     StationDetailSerializer,
@@ -124,13 +125,7 @@ class CrewViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(**journey_docs)
 class JourneyViewSet(viewsets.ModelViewSet):
-    queryset = (Journey.objects
-    .select_related(
-        'route',
-        'train',
-    ).prefetch_related(
-        'crew'
-    ))
+    queryset = Journey.objects.none()
 
     filterset_class = JourneyFilter
 
@@ -138,6 +133,19 @@ class JourneyViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return [AllowAny()]
         return [IsAdminUser()]
+
+    def get_queryset(self):
+        return (
+            Journey.objects
+            .select_related("route", "train")
+            .prefetch_related("crew")
+            .annotate(
+                available_seats=ExpressionWrapper(
+                    F("train__cargo_num") * F("train__places_in_cargo") - Count("tickets"),
+                    output_field=IntegerField()
+                )
+            )
+        )
 
     def get_serializer_class(self):
         if self.action == 'list':

@@ -1,8 +1,6 @@
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from rest_framework import serializers, viewsets
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import serializers
 
 from station.models import (
     Station,
@@ -182,6 +180,7 @@ class JourneyListSerializer(JourneySerializer):
     route = serializers.StringRelatedField()
     train = serializers.StringRelatedField()
     crew = serializers.StringRelatedField(many=True)
+    available_seats = serializers.IntegerField(read_only=True)
 
     class Meta(JourneySerializer.Meta):
         fields = (
@@ -189,8 +188,9 @@ class JourneyListSerializer(JourneySerializer):
             "route",
             "train",
             "crew",
+            "available_seats",
             "departure_date",
-            "arrival_date"
+            "arrival_date",
         )
 
 
@@ -198,6 +198,7 @@ class JourneyDetailSerializer(JourneySerializer):
     route = RouteSerializer(read_only=True)
     train = TrainSerializer(read_only=True)
     crew = CrewSerializer(many=True, read_only=True)
+    available_seats = serializers.IntegerField(read_only=True)
 
 
 class JourneyCreateSerializer(JourneySerializer):
@@ -222,7 +223,7 @@ class JourneyCreateSerializer(JourneySerializer):
             "train_id",
             "crew_ids",
             "departure_date",
-            "arrival_date"
+            "arrival_date",
         )
 
 
