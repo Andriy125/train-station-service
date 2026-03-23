@@ -46,8 +46,20 @@ from station.serializers import (
     TicketListSerializer,
     TicketDetailSerializer,
 )
+from drf_spectacular.utils import extend_schema_view
+from .swagger_docs import (
+    station_docs,
+    route_docs,
+    train_type_docs,
+    train_docs,
+    crew_docs,
+    journey_docs,
+    order_docs,
+    ticket_docs,
+)
 
 
+@extend_schema_view(**station_docs)
 class StationViewSet(viewsets.ModelViewSet):
     queryset = Station.objects.all()
     permission_classes = [IsAdminUser]
@@ -60,6 +72,7 @@ class StationViewSet(viewsets.ModelViewSet):
         return StationCreateSerializer
 
 
+@extend_schema_view(**route_docs)
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.select_related('source', 'destination')
     permission_classes = [IsAdminUser]
@@ -72,12 +85,14 @@ class RouteViewSet(viewsets.ModelViewSet):
         return RouteCreateSerializer
 
 
+@extend_schema_view(**train_type_docs)
 class TrainTypeViewSet(viewsets.ModelViewSet):
     queryset = TrainType.objects.all()
     serializer_class = TrainTypeSerializer
     permission_classes = [IsAdminUser]
 
 
+@extend_schema_view(**train_docs)
 class TrainViewSet(viewsets.ModelViewSet):
     queryset = Train.objects.select_related('train_type')
 
@@ -89,6 +104,7 @@ class TrainViewSet(viewsets.ModelViewSet):
         return TrainCreateSerializer
 
 
+@extend_schema_view(**crew_docs)
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
     permission_classes = [IsAdminUser]
@@ -101,6 +117,7 @@ class CrewViewSet(viewsets.ModelViewSet):
         return CrewCreateSerializer
 
 
+@extend_schema_view(**journey_docs)
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = (Journey.objects
     .select_related(
@@ -125,6 +142,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
         return JourneyCreateSerializer
 
 
+@extend_schema_view(**order_docs)
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.none()
     permission_classes = [IsAuthenticated]
@@ -147,6 +165,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return OrderSerializer
 
 
+@extend_schema_view(**ticket_docs)
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.none()
     permission_classes = [IsAuthenticated]

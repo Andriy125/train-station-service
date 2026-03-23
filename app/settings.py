@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "django_filters",
+    "drf_spectacular",
     "rest_framework",
     "rest_framework_simplejwt",
     "station",
@@ -133,6 +134,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
@@ -151,4 +153,38 @@ SIMPLE_JWT = {
 
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Train Station API',
+    'DESCRIPTION': (
+        'REST API for managing train journeys, routes, tickets and orders.\n\n'
+        '**Authentication:** use `/api/user/token/` to get a JWT access token, '
+        'then click **Authorize** and enter `<your_token>` (without Bearer prefix — it\'s added automatically).'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_PATCH': True,
+    'SORT_OPERATIONS': False,
+    'TAGS': [
+        {'name': 'Stations', 'description': 'Railway station management'},
+        {'name': 'Routes', 'description': 'Routes between stations'},
+        {'name': 'Train Types', 'description': 'Train type catalog'},
+        {'name': 'Trains', 'description': 'Train fleet management'},
+        {'name': 'Crew', 'description': 'Crew member management'},
+        {'name': 'Journeys', 'description': 'Scheduled train journeys'},
+        {'name': 'Orders', 'description': 'Ticket order management'},
+        {'name': 'Tickets', 'description': 'Individual ticket management'},
+    ],
+    'APPEND_COMPONENTS': {
+            'securitySchemes': {
+                'Bearer': {
+                    'type': 'http',
+                    'scheme': 'bearer',
+                    'bearerFormat': 'JWT',
+                }
+            }
+        },
+    'SECURITY': [{'Bearer': []}],
 }

@@ -11,13 +11,13 @@ from station.views import (
 )
 
 router = DefaultRouter()
-router.register('station', StationViewSet)
-router.register('route', RouteViewSet)
-router.register('train', TrainViewSet)
+router.register('stations', StationViewSet)
+router.register('routes', RouteViewSet)
+router.register('trains', TrainViewSet)
 router.register('train-types', TrainTypeViewSet)
-router.register('crew', CrewViewSet)
+router.register('crews', CrewViewSet)
 router.register('journeys', JourneyViewSet)
-router.register('order', OrderViewSet)
-router.register('Ticket', TicketViewSet)
+router.register('orders', OrderViewSet)
+router.register('tickets', TicketViewSet)
 
 urlpatterns = router.urls
