@@ -44,7 +44,7 @@ from station.serializers import (
 
     TicketSerializer,
     TicketListSerializer,
-    TicketDetailSerializer,
+    TicketDetailSerializer, OrderCreateSerializer,
 )
 from drf_spectacular.utils import extend_schema_view
 from .swagger_docs import (
@@ -95,6 +95,11 @@ class TrainTypeViewSet(viewsets.ModelViewSet):
 @extend_schema_view(**train_docs)
 class TrainViewSet(viewsets.ModelViewSet):
     queryset = Train.objects.select_related('train_type')
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -162,6 +167,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             return OrderListSerializer
         elif self.action == 'retrieve':
             return OrderDetailSerializer
+        elif self.action == 'create':
+            return OrderCreateSerializer
         return OrderSerializer
 
 
