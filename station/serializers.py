@@ -291,7 +291,7 @@ class TicketCreateSerializer(TicketSerializer):
     def validate(self, attrs):
         instance = Ticket(**attrs)
         try:
-            instance.full_clean()
+            instance.full_clean(exclude=["order"])
         except ValidationError as e:
             raise serializers.ValidationError(e.message_dict)
 
@@ -343,10 +343,10 @@ class OrderCreateSerializer(OrderSerializer):
                 cargo=ticket["cargo"],
                 seat=ticket["seat"]
             ).exists():
-                raise serializers.ValidationError({
+                raise serializers.ValidationError(
                     f"Seat {ticket['seat']} in carriage {ticket['cargo']} "
                     f"for journey {ticket['journey']} is already taken"
-                })
+                )
 
     def create(self, validated_data):
         tickets_data = validated_data.pop('tickets')

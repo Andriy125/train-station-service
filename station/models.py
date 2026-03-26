@@ -36,6 +36,9 @@ class Route(models.Model):
         ]
 
     def clean(self):
+        self._validate_source_differs_from_destination()
+
+    def _validate_source_differs_from_destination(self):
         if self.source == self.destination:
             raise ValidationError("Source and destination must be different.")
 
@@ -101,6 +104,9 @@ class Journey(models.Model):
     )
 
     def clean(self):
+        self._validate_departure_before_arrival()
+
+    def _validate_departure_before_arrival(self):
         if self.departure_date > self.arrival_date:
             raise ValidationError("Departure date must be before arrival date.")
 
@@ -149,14 +155,20 @@ class Ticket(models.Model):
             return
 
         train = self.journey.train
-        if self.cargo < 1:
-            raise ValidationError("Cargo number must be greater than 0")
-        if self.seat < 1:
-            raise ValidationError("Seat number must be greater than 0")
-        if self.cargo > train.cargo_num:
-            raise ValidationError(f"Train has only {train.cargo_num} wagons")
-        if self.seat > train.places_in_cargo:
-            raise ValidationError(f"Each wagon only {train.places_in_cargo} seats")
+        self._validate_cargo(train)
+        self._validate_seat(train)
+
+    def _validate_cargo(self, train):
+        if self.cargo < 1 or self.cargo > train.cargo_num:
+            raise ValidationError(
+                f"Cargo must be between 1 and {train.cargo_num}."
+            )
+
+    def _validate_seat(self, train):
+        if self.seat < 1 or self.seat > train.places_in_cargo:
+            raise ValidationError(
+                f"Seat must be between 1 and {train.places_in_cargo}."
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
