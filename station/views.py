@@ -43,7 +43,6 @@ from station.serializers import (
     OrderListSerializer,
     OrderDetailSerializer,
 
-    TicketSerializer,
     TicketListSerializer,
     TicketDetailSerializer, OrderCreateSerializer,
 )
@@ -181,7 +180,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema_view(**ticket_docs)
-class TicketViewSet(viewsets.ModelViewSet):
+class TicketViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ticket.objects.none()
     permission_classes = [IsAuthenticated]
 
@@ -194,6 +193,4 @@ class TicketViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return TicketListSerializer
-        elif self.action == 'retrieve':
-            return TicketDetailSerializer
-        return TicketSerializer
+        return TicketDetailSerializer
