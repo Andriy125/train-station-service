@@ -62,7 +62,11 @@ from .swagger_docs import (
 @extend_schema_view(**station_docs)
 class StationViewSet(viewsets.ModelViewSet):
     queryset = Station.objects.all()
-    permission_classes = [IsAdminUser]
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
     def get_serializer_class(self):
         if self.action == 'list':
