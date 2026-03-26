@@ -92,8 +92,8 @@ class Journey(models.Model):
         on_delete=models.PROTECT,
         related_name='journeys',
     )
-    departure_date = models.DateField()
-    arrival_date = models.DateField()
+    departure_date = models.DateTimeField()
+    arrival_date = models.DateTimeField()
 
     crew = models.ManyToManyField(
         Crew,
