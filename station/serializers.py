@@ -159,15 +159,6 @@ class CrewDetailSerializer(CrewSerializer):
         )
 
 
-class CrewCreateSerializer(CrewSerializer):
-    class Meta(CrewSerializer.Meta):
-        fields = (
-            'id',
-            'first_name',
-            'last_name',
-            'role',
-        )
-
 
 class JourneySerializer(serializers.ModelSerializer):
 
@@ -326,14 +317,14 @@ class OrderCreateSerializer(OrderSerializer):
 
     @staticmethod
     def _validate_tickets_uniqueness(tickets):
-        ticket_list = []
+        seen = set()
         for ticket in tickets:
             ticket_identity = (ticket["journey"], ticket["cargo"], ticket["seat"])
-            if ticket_identity in ticket_list:
+            if ticket_identity in seen:
                 raise serializers.ValidationError(
                     "You cannot order the same ticket multiple times in one order."
                 )
-            ticket_list.append(ticket_identity)
+            seen.add(ticket_identity)
 
     @staticmethod
     def _validate_seats_availability(tickets):

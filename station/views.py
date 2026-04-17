@@ -33,7 +33,6 @@ from station.serializers import (
 
     CrewListSerializer,
     CrewDetailSerializer,
-    CrewCreateSerializer,
 
     JourneyListSerializer,
     JourneyDetailSerializer,
@@ -118,8 +117,7 @@ class CrewViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         return {
             'list': CrewListSerializer,
-            'retrieve': CrewDetailSerializer,
-        }.get(self.action, CrewCreateSerializer)
+        }.get(self.action, CrewDetailSerializer)
 
 
 @extend_schema_view(**journey_docs)
