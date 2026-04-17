@@ -69,11 +69,10 @@ class StationViewSet(viewsets.ModelViewSet):
         return [IsAdminUser()]
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return StationListSerializer
-        elif self.action == 'retrieve':
-            return StationDetailSerializer
-        return StationCreateSerializer
+        return {
+            'list': StationListSerializer,
+            'retrieve': StationDetailSerializer,
+        }.get(self.action, StationCreateSerializer)
 
 
 @extend_schema_view(**route_docs)
@@ -82,11 +81,10 @@ class RouteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return RouteListSerializer
-        elif self.action == 'retrieve':
-            return RouteDetailSerializer
-        return RouteCreateSerializer
+        return {
+            'list': RouteListSerializer,
+            'retrieve': RouteDetailSerializer,
+        }.get(self.action, RouteCreateSerializer)
 
 
 @extend_schema_view(**train_type_docs)
@@ -106,11 +104,10 @@ class TrainViewSet(viewsets.ModelViewSet):
         return [IsAdminUser()]
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return TrainListSerializer
-        elif self.action == 'retrieve':
-            return TrainDetailSerializer
-        return TrainCreateSerializer
+        return {
+            'list': TrainListSerializer,
+            'retrieve': TrainDetailSerializer,
+        }.get(self.action, TrainCreateSerializer)
 
 
 @extend_schema_view(**crew_docs)
@@ -119,17 +116,15 @@ class CrewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return CrewListSerializer
-        elif self.action == 'retrieve':
-            return CrewDetailSerializer
-        return CrewCreateSerializer
+        return {
+            'list': CrewListSerializer,
+            'retrieve': CrewDetailSerializer,
+        }.get(self.action, CrewCreateSerializer)
 
 
 @extend_schema_view(**journey_docs)
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = Journey.objects.none()
-
     filterset_class = JourneyFilter
 
     def get_permissions(self):
@@ -142,20 +137,21 @@ class JourneyViewSet(viewsets.ModelViewSet):
             Journey.objects
             .select_related("route", "train")
             .prefetch_related("crew")
-            .annotate(
-                available_seats=ExpressionWrapper(
-                    F("train__cargo_num") * F("train__places_in_cargo") - Count("tickets"),
-                    output_field=IntegerField()
-                )
-            )
+            .annotate(available_seats=self._calc_available_seats())
+        )
+
+    @staticmethod
+    def _calc_available_seats():
+        return ExpressionWrapper(
+            F("train__cargo_num") * F("train__places_in_cargo") - Count("tickets"),
+            output_field=IntegerField()
         )
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return JourneyListSerializer
-        elif self.action == 'retrieve':
-            return JourneyDetailSerializer
-        return JourneyCreateSerializer
+        return {
+            'list': JourneyListSerializer,
+            'retrieve': JourneyDetailSerializer,
+        }.get(self.action, JourneyCreateSerializer)
 
 
 @extend_schema_view(**order_docs)
@@ -167,20 +163,23 @@ class OrderViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if user.is_staff:
-            return Order.objects.all().prefetch_related('tickets')
+            return self._get_all_orders()
+        return self._get_user_orders(user)
 
-        return Order.objects.filter(
-            user=user
-        ).prefetch_related('tickets')
+    @staticmethod
+    def _get_all_orders():
+        return Order.objects.all().prefetch_related('tickets')
+
+    @staticmethod
+    def _get_user_orders(user):
+        return Order.objects.filter(user=user).prefetch_related('tickets')
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return OrderListSerializer
-        elif self.action == 'retrieve':
-            return OrderDetailSerializer
-        elif self.action == 'create':
-            return OrderCreateSerializer
-        return OrderSerializer
+        return {
+            'list': OrderListSerializer,
+            'retrieve': OrderDetailSerializer,
+            'create': OrderCreateSerializer,
+        }.get(self.action, OrderSerializer)
 
 
 @extend_schema_view(**ticket_docs)
@@ -189,12 +188,11 @@ class TicketViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Ticket.objects.filter(order__user=self.request.user)
-        if self.action in ['list', 'retrieve']:
-            queryset = queryset.select_related('journey', 'order')
-        return queryset
+        return Ticket.objects.filter(
+            order__user=self.request.user
+        ).select_related('journey', 'order')
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return TicketListSerializer
-        return TicketDetailSerializer
+        return {
+            'list': TicketListSerializer,
+        }.get(self.action, TicketDetailSerializer)
