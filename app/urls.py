@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -24,6 +25,8 @@ from drf_spectacular.views import (
 from rest_framework.permissions import AllowAny
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='/api/doc/swagger/', permanent=False)),
+
     path('admin/', admin.site.urls),
 
     # ← JWT + registration
