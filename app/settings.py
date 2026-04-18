@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-at8f$!23($ok=*66np((^uy_xh4142lq0t9rmwv2y_*$p2m8zn'
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,8 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "django_filters",
+    "drf_spectacular",
     "rest_framework",
-    "station"
+    "rest_framework_simplejwt",
+    "station",
+    "user",
 ]
 
 MIDDLEWARE = [
@@ -80,8 +85,8 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": "db",
-        "PORT": 5432,
+        "HOST": os.getenv("POSTGRES_HOST", "db"),
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
 }
 
@@ -121,3 +126,65 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Train Station API',
+    'DESCRIPTION': (
+        'REST API for managing train journeys, routes, tickets and orders.\n\n'
+        '**Authentication:** use `/api/user/token/` to get a JWT access token, '
+        'then click **Authorize** and enter `<your_token>` (without Bearer prefix — it\'s added automatically).'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_PATCH': True,
+    'SORT_OPERATIONS': False,
+    'TAGS': [
+        {'name': 'Stations', 'description': 'Railway station management'},
+        {'name': 'Routes', 'description': 'Routes between stations'},
+        {'name': 'Train Types', 'description': 'Train type catalog'},
+        {'name': 'Trains', 'description': 'Train fleet management'},
+        {'name': 'Crew', 'description': 'Crew member management'},
+        {'name': 'Journeys', 'description': 'Scheduled train journeys'},
+        {'name': 'Orders', 'description': 'Ticket order management'},
+        {'name': 'Tickets', 'description': 'Individual ticket management'},
+    ],
+    'APPEND_COMPONENTS': {
+            'securitySchemes': {
+                'Bearer': {
+                    'type': 'http',
+                    'scheme': 'bearer',
+                    'bearerFormat': 'JWT',
+                }
+            }
+        },
+    'SECURITY': [{'Bearer': []}],
+}
